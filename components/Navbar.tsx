@@ -2,24 +2,57 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, Search, ShoppingBag, X } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import { products } from "@/data/products";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, cn } from "@/lib/utils";
 
-const links = [
-  { label: "Shop", href: "/shop" },
-  { label: "Skincare", href: "/shop?category=skincare" },
-  { label: "Body Care", href: "/shop?category=bodycare" },
-  { label: "Bundles", href: "/shop?category=bundles" },
-  { label: "About", href: "/#about" },
+interface NavLink {
+  label: string;
+  href: string;
+  /** Matches pathname + optional `?category=` value. */
+  match: { pathname: string; category?: string | null };
+}
+
+const links: NavLink[] = [
+  { label: "Shop", href: "/shop", match: { pathname: "/shop", category: null } },
+  {
+    label: "Skincare",
+    href: "/shop?category=skincare",
+    match: { pathname: "/shop", category: "skincare" },
+  },
+  {
+    label: "Body Care",
+    href: "/shop?category=bodycare",
+    match: { pathname: "/shop", category: "bodycare" },
+  },
+  {
+    label: "Bundles",
+    href: "/shop?category=bundles",
+    match: { pathname: "/shop", category: "bundles" },
+  },
+  { label: "About", href: "/#about", match: { pathname: "/" } },
 ];
+
+function useIsActive() {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const category = searchParams.get("category");
+  return (link: NavLink) => {
+    if (link.match.pathname !== pathname) return false;
+    if (link.match.category === undefined) return true;
+    return (link.match.category ?? null) === (category ?? null);
+  };
+}
 
 export default function Navbar() {
   const itemCount = useCartStore((s) => s.itemCount());
   const justAddedId = useCartStore((s) => s.justAddedId);
   const openDrawer = useCartStore((s) => s.openDrawer);
+
+  const isActive = useIsActive();
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -66,15 +99,31 @@ export default function Navbar() {
           </div>
 
           <nav className="hidden md:flex items-center gap-8">
-            {links.map((l) => (
-              <Link
-                key={l.href}
-                href={l.href}
-                className="text-sm text-ink/80 transition-colors hover:text-ink"
-              >
-                {l.label}
-              </Link>
-            ))}
+            {links.map((l) => {
+              const active = isActive(l);
+              return (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  aria-current={active ? "page" : undefined}
+                  className={cn(
+                    "relative text-sm transition-colors",
+                    active
+                      ? "font-semibold text-ink"
+                      : "font-normal text-ink/70 hover:text-ink"
+                  )}
+                >
+                  {l.label}
+                  {active && (
+                    <motion.span
+                      layoutId="nav-underline"
+                      className="absolute -bottom-1 left-0 right-0 h-[2px] rounded-full bg-accent"
+                      transition={{ type: "spring", stiffness: 500, damping: 40 }}
+                    />
+                  )}
+                </Link>
+              );
+            })}
           </nav>
 
           <div className="flex items-center gap-2">
@@ -143,16 +192,28 @@ export default function Navbar() {
                 </button>
               </div>
               <nav className="flex flex-col gap-1">
-                {links.map((l) => (
-                  <Link
-                    key={l.href}
-                    href={l.href}
-                    onClick={() => setMobileOpen(false)}
-                    className="rounded-md px-3 py-3 text-base hover:bg-bg-warm"
-                  >
-                    {l.label}
-                  </Link>
-                ))}
+                {links.map((l) => {
+                  const active = isActive(l);
+                  return (
+                    <Link
+                      key={l.href}
+                      href={l.href}
+                      onClick={() => setMobileOpen(false)}
+                      aria-current={active ? "page" : undefined}
+                      className={cn(
+                        "flex items-center justify-between rounded-md px-3 py-3 text-base transition-colors",
+                        active
+                          ? "bg-bg-warm font-semibold text-ink"
+                          : "font-normal text-ink/80 hover:bg-bg-warm hover:text-ink"
+                      )}
+                    >
+                      <span>{l.label}</span>
+                      {active && (
+                        <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+                      )}
+                    </Link>
+                  );
+                })}
               </nav>
             </motion.div>
           </motion.div>

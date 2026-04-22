@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
@@ -32,7 +33,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
       <body className="font-sans text-ink">
-        <Navbar />
+        <Suspense fallback={<div className="h-16 border-b border-ink/5" />}>
+          <Navbar />
+        </Suspense>
         <main className="min-h-screen">{children}</main>
         <Footer />
         <CartDrawer />
