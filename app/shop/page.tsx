@@ -1,24 +1,46 @@
 "use client";
 
-import { Suspense, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Category, products } from "@/data/products";
 import FilterBar, { SortKey } from "@/components/FilterBar";
 import ProductGrid from "@/components/ProductGrid";
 
+const VALID_CATEGORIES: ReadonlyArray<Category> = [
+  "skincare",
+  "bodycare",
+  "bundles",
+];
+
+function parseCategory(raw: string | null): Category | "all" {
+  return VALID_CATEGORIES.includes(raw as Category)
+    ? (raw as Category)
+    : "all";
+}
+
 function ShopContent() {
   const searchParams = useSearchParams();
-  const initialCategory = (searchParams.get("category") as Category | null) ||
-    "all";
+  const router = useRouter();
+  const pathname = usePathname();
 
-  const [category, setCategory] = useState<Category | "all">(
-    initialCategory === "skincare" ||
-      initialCategory === "bodycare" ||
-      initialCategory === "bundles"
-      ? initialCategory
-      : "all"
-  );
+  const urlCategory = parseCategory(searchParams.get("category"));
+  const [category, setCategory] = useState<Category | "all">(urlCategory);
   const [sort, setSort] = useState<SortKey>("featured");
+
+  // Sync state when the URL changes (e.g. navbar click while on /shop).
+  useEffect(() => {
+    setCategory(urlCategory);
+  }, [urlCategory]);
+
+  // Keep the URL in sync when the user clicks filter chips.
+  const handleCategoryChange = (next: Category | "all") => {
+    setCategory(next);
+    const params = new URLSearchParams(searchParams.toString());
+    if (next === "all") params.delete("category");
+    else params.set("category", next);
+    const qs = params.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  };
 
   const filtered = useMemo(() => {
     let list = [...products];
@@ -70,7 +92,7 @@ function ShopContent() {
 
       <FilterBar
         category={category}
-        onCategoryChange={setCategory}
+        onCategoryChange={handleCategoryChange}
         sort={sort}
         onSortChange={setSort}
         count={filtered.length}
