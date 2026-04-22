@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  background-color: #ffffff;
+  color: #1a1a1a;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-ink px-6 py-3 text-sm font-medium text-white transition-all hover:bg-black/85 active:scale-[0.98] disabled:opacity-60;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-ink/15 px-6 py-3 text-sm font-medium text-ink transition-colors hover:border-ink hover:bg-ink hover:text-white;
+  }
+  .chip {
+    @apply inline-flex items-center rounded-full border border-ink/15 px-4 py-1.5 text-xs font-medium transition-colors hover:border-ink;
+  }
+  .chip-active {
+    @apply bg-ink text-white border-ink;
+  }
+  .input {
+    @apply w-full rounded-md border border-ink/15 bg-white px-4 py-3 text-sm outline-none transition-colors focus:border-ink;
+  }
+  .section-title {
+    @apply font-display text-3xl md:text-4xl tracking-tight text-ink;
+  }
+}
+
+/* Hide scrollbar for horizontal scroll row */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
